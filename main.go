@@ -17,7 +17,6 @@ func main() {
 	}
 
 	base = filepath.Base(file)
-	fmt.Println(base)
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println(err)
@@ -27,7 +26,13 @@ func main() {
 	lines := GetLines(data)
 	clines := CutLines(lines)
 	//	clines := lines
-	for _, l := range clines {
+	rfcs, refs := OutputLines(base, clines)
+	fmt.Println("RFCS ----")
+	for _, l := range rfcs {
+		l.Debug("")
+	}
+	fmt.Println("REFS----")
+	for _, l := range refs {
 		l.Debug("")
 	}
 }

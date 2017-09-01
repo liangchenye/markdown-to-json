@@ -158,16 +158,20 @@ func (l *Line) Compare(line Line) int {
 
 }
 
+func (l *Line) GetKey() (string, bool) {
+	if l.T != nil {
+		return l.T.Name, true
+	}
+
+	return l.I.Key, false
+}
+
 func (l *Line) RFCRecord() bool {
 	if l.I == nil {
 		return false
 	}
 
 	if l.I.RFC != "" {
-		// This is mandantory fields, will check by schema
-		if l.I.RFC == "REQUIRED" && l.I.Key != "" {
-			return false
-		}
 		return true
 	}
 
@@ -191,6 +195,8 @@ func GetLines(data []byte) []Line {
 	for _, s := range stripRegs {
 		str = s.ReplaceAllString(str, "")
 	}
+	// Hotfix, the mandatory field sometimes is useless
+	str = strings.Replace(str, "REQUIRED)", "Required)", -1)
 
 	var lines []Line
 	strs := strings.Split(str, "\n")
