@@ -61,7 +61,9 @@ func NewOutputRFC(base string, leafs []Leaf, cur int, title map[int]OutputRef) O
 			key := leafs[i].GetKey()
 			o.Keys = append([]string{key}, o.Keys...)
 			outputRef := NewOutputRef(base, leafs[i])
-			title[i] = outputRef
+			if _, ok := title[i]; !ok {
+				title[i] = outputRef
+			}
 			o.Ref = outputRef
 			return o
 		}
@@ -89,8 +91,12 @@ func OutputLeafs(base string, leafs []Leaf) ([]OutputRFC, []OutputRef) {
 		}
 	}
 
-	for _, ref := range usefulTitle {
-		outputRefs = append(outputRefs, ref)
+	for i, l := range leafs {
+		if l.Type == "title" {
+			if _, ok := usefulTitle[i]; ok {
+				outputRefs = append(outputRefs, usefulTitle[i])
+			}
+		}
 	}
 	return outputRFCs, outputRefs
 }
