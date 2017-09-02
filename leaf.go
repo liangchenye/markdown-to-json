@@ -24,11 +24,20 @@ var (
 // Level is 2
 // Name is 'Hello word'
 // Ref is  'hello-word'
-type Title struct {
+type Leaf struct {
+	// Type: Title, Item
+	Type string
+	// Value: original string
 	Value string
+	// Level
 	Level int
-	Name  string
-	Ref   string
+	// Key
+	// Title: it is the display name
+	// Content: it is the **`$key`**, could be empty
+	Key string
+	// has MUST|SHOULD ..
+	// Title: should be empty
+	RFC string
 }
 
 func GetTitleNameAndRef(value string) (string, string) {
@@ -41,36 +50,29 @@ func GetTitleNameAndRef(value string) (string, string) {
 	return name, ref
 }
 
-func NewTitle(value string) (Title, error) {
-	var title Title
+func NewTitle(value string) (Leaf, error) {
+	var title Leaf
 	// trim all the anchors
 	src := anchorReg.ReplaceAllString(value, "")
 	ts := titleReg.FindStringSubmatch(src)
 	if len(ts) != 3 {
-		return Title{}, fmt.Errorf("'%s' is not valid title", value)
+		return Leaf{}, fmt.Errorf("'%s' is not valid title", value)
 	}
 
+	title.Type = "title"
 	title.Value = value
 	title.Level = len(ts[1])
-	title.Name, title.Ref = GetTitleNameAndRef(ts[2])
+	title.Key = strings.TrimSpace(ts[2])
 	return title, nil
 }
 
-type Item struct {
-	Value string
+func NewItem(value string) Leaf {
+	var item Leaf
+
+	item.Type = "item"
+	item.Value = value
 	// Item is the blank space numbers at the beginning
 	//   the line which has more spaces, is the child most likely
-	Level int
-	// Could be empty
-	Key string
-	// FIXME: we only assume one, could be empty
-	RFC string
-}
-
-func NewItem(value string) Item {
-	var item Item
-
-	item.Value = value
 	for _, v := range value {
 		if v == ' ' {
 			item.Level++
@@ -79,6 +81,7 @@ func NewItem(value string) Item {
 		}
 	}
 
+	// Item always lower than title
 	item.Level += TitleWeight
 
 	vs := rfcReg.FindStringSubmatch(value)
@@ -94,7 +97,24 @@ func NewItem(value string) Item {
 	return item
 }
 
-func (i *Item) Useful() bool {
+func NewLeaf(value string) *Leaf {
+	if strings.HasPrefix(value, "#") {
+		if title, err := NewTitle(value); err == nil {
+			return &title
+		}
+	} else {
+		item := NewItem(value)
+		if item.Useful() {
+			return &item
+		}
+	}
+	return nil
+}
+
+func (i *Leaf) Useful() bool {
+	if i.Type == "title" {
+		return true
+	}
 	if i.Key != "" || i.RFC != "" {
 		return true
 	}
@@ -102,91 +122,42 @@ func (i *Item) Useful() bool {
 	return false
 }
 
-type Line struct {
-	T *Title
-	I *Item
-}
-
-func NewLine(value string) *Line {
-	var l Line
-	l.T = nil
-	l.I = nil
-	if strings.HasPrefix(value, "#") {
-		if title, err := NewTitle(value); err == nil {
-			l.T = &title
-			return &l
-		}
-	} else {
-		item := NewItem(value)
-		if item.Useful() {
-			l.I = &item
-			return &l
-		}
-	}
-	return nil
-}
-
-// bigger means less..
+// bigger means 'parent'
 // Return 1 if original is bigger
 // Return 0 if equal
 // Return -1 if smaller
 // Title always bigger than Item
-func (l *Line) Compare(line Line) int {
-	// Title
-	if l.T != nil {
-		if line.T == nil {
-			return 1
-		}
-		if l.T.Level < line.T.Level {
-			return 1
-		} else if l.T.Level == line.T.Level {
-			return 0
-		}
-		return -1
-	}
-
-	// Item
-	if line.T != nil {
-		return -1
-	}
-	if l.I.Level < line.I.Level {
+func (l *Leaf) Compare(line Leaf) int {
+	if l.Level < line.Level {
 		return 1
-	} else if l.I.Level == line.I.Level {
+	} else if l.Level == line.Level {
 		return 0
 	}
+
 	return -1
-
 }
 
-func (l *Line) GetKey() (string, bool) {
-	if l.T != nil {
-		return l.T.Name, true
-	}
-
-	return l.I.Key, false
+func (l *Leaf) GetLevel() int {
+	return l.Level
 }
 
-func (l *Line) RFCRecord() bool {
-	if l.I == nil {
-		return false
-	}
+func (l *Leaf) GetKey() string {
+	return l.Key
+}
 
-	if l.I.RFC != "" {
+func (l *Leaf) RFCRecord() bool {
+	if l.RFC != "" {
 		return true
 	}
 
 	return false
 }
 
-func (l *Line) Debug(prefix string) {
-	if l.T != nil {
-		fmt.Printf("%s Title %s %d\n", prefix, l.T.Ref, l.T.Level)
-	} else {
-		fmt.Printf("%s Item %s %d\n", prefix, l.I.Value, l.I.Level)
-	}
+func (l *Leaf) Debug(prefix string) {
+	fmt.Printf("%s %s %s %d: %s\n", prefix, l.Type, l.Key, l.Level, l.Value)
 }
 
-func GetLines(data []byte) []Line {
+func GetLeafs(data []byte) []Leaf {
 	stripRegs := []*regexp.Regexp{
 		backtickReg,
 	}
@@ -198,13 +169,13 @@ func GetLines(data []byte) []Line {
 	// Hotfix, the mandatory field sometimes is useless
 	str = strings.Replace(str, "REQUIRED)", "Required)", -1)
 
-	var lines []Line
+	var leafs []Leaf
 	strs := strings.Split(str, "\n")
 	for _, s := range strs {
-		l := NewLine(s)
+		l := NewLeaf(s)
 		if l != nil {
-			lines = append(lines, *l)
+			leafs = append(leafs, *l)
 		}
 	}
-	return lines
+	return leafs
 }

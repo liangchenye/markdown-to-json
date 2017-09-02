@@ -5,20 +5,20 @@ import (
 	"strings"
 )
 
-func CutLines(lines []Line) []Line {
-	var ret []Line
-	var last *Line
+func CutLeafs(leafs []Leaf) []Leaf {
+	var ret []Leaf
+	var last *Leaf
 	last = nil
-	for i := len(lines); i > 0; i-- {
-		line := lines[i-1]
-		if line.RFCRecord() {
-			ret = append([]Line{line}, ret...)
+	for i := len(leafs); i > 0; i-- {
+		leaf := leafs[i-1]
+		if leaf.RFCRecord() {
+			ret = append([]Leaf{leaf}, ret...)
 		} else {
-			if last != nil && line.Compare(*last) > 0 {
-				ret = append([]Line{line}, ret...)
+			if last != nil && leaf.Compare(*last) > 0 {
+				ret = append([]Leaf{leaf}, ret...)
 			}
 		}
-		last = &line
+		last = &leaf
 	}
 
 	return ret
@@ -30,16 +30,16 @@ type OutputRef struct {
 	Ref  string
 }
 
-func NewOutputRef(base string, line Line) OutputRef {
+func NewOutputRef(base string, leaf Leaf) OutputRef {
 	var o OutputRef
-	o.Var = ToCamel(line.T.Ref)
-	o.Name = line.T.Name
-	o.Ref = fmt.Sprintf("%s#%s", base, line.T.Ref)
+	o.Var = ToCamel(leaf.Key)
+	o.Name = leaf.Key
+	o.Ref = fmt.Sprintf("%s#%s", base, ToRef(leaf.Key))
 	return o
 }
 
 func (o *OutputRef) Debug(prefix string) {
-	fmt.Printf("%s %s %s %s\n", prefix, o.Var, o.Name, o.Ref)
+	fmt.Printf("%s --- Ref --- %s %s %s\n", prefix, o.Var, o.Name, o.Ref)
 }
 
 type OutputRFC struct {
@@ -49,36 +49,39 @@ type OutputRFC struct {
 }
 
 func (o *OutputRFC) Debug(prefix string) {
-	fmt.Printf("%s %s %s %s\n", prefix, strings.Join(o.Keys, "#"), o.Value, o.Ref)
+	fmt.Printf("%s --- RFC --- %s %s %s\n", prefix, strings.Join(o.Keys, "#"), o.Value, o.Ref)
 }
-func NewOutputRFC(base string, lines []Line, cur int, title map[int]OutputRef) OutputRFC {
+func NewOutputRFC(base string, leafs []Leaf, cur int, title map[int]OutputRef) OutputRFC {
 	var o OutputRFC
-	o.Value = lines[cur].I.Value
+	o.Value = leafs[cur].Value
 	for i := cur; i >= 0; i-- {
-		key, isTitle := lines[i].GetKey()
-		if key != "" {
+		// Get Title, finish
+		if leafs[i].Type == "title" {
+			key := leafs[i].GetKey()
 			o.Keys = append([]string{key}, o.Keys...)
-		}
-		// When we get title, we get ref and thus to return
-		if isTitle {
-			outputRef := NewOutputRef(base, lines[i])
+			outputRef := NewOutputRef(base, leafs[i])
 			title[i] = outputRef
 			o.Ref = outputRef
 			return o
+		}
+
+		if leafs[i].Compare(leafs[cur]) > 0 {
+			key := leafs[i].GetKey()
+			o.Keys = append([]string{key}, o.Keys...)
 		}
 	}
 	panic("Invalid loop?")
 	return o
 }
 
-func OutputLines(base string, lines []Line) ([]OutputRFC, []OutputRef) {
+func OutputLeafs(base string, leafs []Leaf) ([]OutputRFC, []OutputRef) {
 	var outputRFCs []OutputRFC
 	var outputRefs []OutputRef
 	usefulTitle := make(map[int]OutputRef)
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := lines[i]
-		if line.RFCRecord() {
-			outputRFC := NewOutputRFC(base, lines, i, usefulTitle)
+	for i := len(leafs) - 1; i >= 0; i-- {
+		leaf := leafs[i]
+		if leaf.RFCRecord() {
+			outputRFC := NewOutputRFC(base, leafs, i, usefulTitle)
 			outputRFCs = append([]OutputRFC{outputRFC}, outputRFCs...)
 		}
 	}
@@ -89,7 +92,18 @@ func OutputLines(base string, lines []Line) ([]OutputRFC, []OutputRef) {
 	return outputRFCs, outputRefs
 }
 
+func ToRef(value string) string {
+	name := strings.TrimSpace(value)
+
+	ref := strings.Replace(name, "(", "", -1)
+	ref = strings.Replace(ref, ")", "", -1)
+	ref = strings.Replace(ref, " ", "-", -1)
+	ref = strings.ToLower(ref)
+	return ref
+}
+
 func ToCamel(value string) string {
+	value = ToRef(value)
 	var ret string
 	last := false
 	for _, r := range value {

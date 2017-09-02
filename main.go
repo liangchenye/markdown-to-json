@@ -23,10 +23,10 @@ func main() {
 		return
 	}
 
-	lines := GetLines(data)
-	clines := CutLines(lines)
-	//	clines := lines
-	rfcs, refs := OutputLines(base, clines)
+	leafs := GetLeafs(data)
+	cleafs := CutLeafs(leafs)
+	//	cleafs := leafs
+	rfcs, refs := OutputLeafs(base, cleafs)
 	fmt.Println("RFCS ----")
 	for _, l := range rfcs {
 		l.Debug("")
