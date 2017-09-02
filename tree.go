@@ -53,6 +53,7 @@ func (o *OutputRFC) Debug(prefix string) {
 }
 func NewOutputRFC(base string, leafs []Leaf, cur int, title map[int]OutputRef) OutputRFC {
 	var o OutputRFC
+	curLevel := leafs[cur].Level
 	o.Value = leafs[cur].Value
 	for i := cur; i >= 0; i-- {
 		// Get Title, finish
@@ -65,7 +66,9 @@ func NewOutputRFC(base string, leafs []Leaf, cur int, title map[int]OutputRef) O
 			return o
 		}
 
-		if leafs[i].Compare(leafs[cur]) > 0 {
+		// small means higher..
+		if i == cur || leafs[i].Level < curLevel {
+			curLevel = leafs[i].Level
 			key := leafs[i].GetKey()
 			o.Keys = append([]string{key}, o.Keys...)
 		}
