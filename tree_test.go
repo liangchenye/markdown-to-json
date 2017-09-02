@@ -9,13 +9,14 @@ import (
 func TestToCamel(t *testing.T) {
 	cases := []struct {
 		value    string
+		begin    bool
 		expected string
 	}{
-		{"abcd", "abcd"},
-		{"ab-cd", "abCd"},
+		{"abcd", false, "abcd"},
+		{"ab-cd", true, "AbCd"},
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.expected, ToCamel(c.value))
+		assert.Equal(t, c.expected, ToCamel(c.value, c.begin))
 	}
 }

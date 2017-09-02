@@ -1,59 +1,205 @@
-RFCS ----
- Specification version#ociVersion * **`ociVersion`** (string, Required) MUST be in [SemVer v2.0.0][semver-v2.0.0] format and specifies the version of the Open Container Runtime Specification with which the bundle complies. {specificationVersion Specification version config.md#specification-version}
- Root#root     On Windows, for Windows Server Containers, this field is REQUIRED. {root Root config.md#root}
- Root#root     For [Hyper-V Containers](config-windows.md#hyperv), this field MUST NOT be set. {root Root config.md#root}
- Root#root     On all other platforms, this field is REQUIRED. {root Root config.md#root}
- Root#root#path     * On Windows, `path` MUST be a [volume GUID path][naming-a-volume]. {root Root config.md#root}
- Root#root#path         The value SHOULD be the conventional `rootfs`. {root Root config.md#root}
- Root#root#path     A directory MUST exist at the path declared by the field. {root Root config.md#root}
- Root#root#path#readonly * **`readonly`** (bool, OPTIONAL) If true then the root filesystem MUST be read-only inside the container, defaults to false. {root Root config.md#root}
- Root#root#path#readonly     * On Windows, this field MUST be omitted or false. {root Root config.md#root}
- Mounts#mounts     The runtime MUST mount entries in the listed order. {mounts Mounts config.md#mounts}
- Mounts#mounts#destination     This value MUST be an absolute path. {mounts Mounts config.md#mounts}
- Mounts#mounts#destination     * Windows: one mount destination MUST NOT be nested within another mount (e.g., c:\\foo and c:\\foo\\bar). {mounts Mounts config.md#mounts}
- Mounts#mounts#destination#options     * Windows: runtimes MUST support `ro`, mounting the filesystem read-only when `ro` is given. {mounts Mounts config.md#mounts}
- Process#process     This property is REQUIRED when [`start`](runtime.md#start) is called. {process Process config.md#process}
- Process#process#consoleSize     Runtimes MUST ignore `consoleSize` if `terminal` is `false` or unset. {process Process config.md#process}
- Process#process#consoleSize#cwd     This value MUST be an absolute path. {process Process config.md#process}
- Process#process#consoleSize#cwd#args     This specification extends the IEEE standard in that at least one entry is REQUIRED, and that entry is used with the same semantics as `execvp`'s *file*. {process Process config.md#process}
- POSIX process#rlimits#type         The runtime MUST [generate an error](runtime.md#errors) for any values which cannot be mapped to a relevant kernel interface {posixProcess POSIX process config.md#posix-process}
- POSIX process#rlimits#type         For each entry in `rlimits`, a [`getrlimit(3)`][getrlimit.3] on `type` MUST succeed. {posixProcess POSIX process config.md#posix-process}
- POSIX process#rlimits#type#soft         `rlim.rlim_cur` MUST match the configured value. {posixProcess POSIX process config.md#posix-process}
- POSIX process#rlimits#type#soft#hard         `rlim.rlim_max` MUST match the configured value. {posixProcess POSIX process config.md#posix-process}
- POSIX process#rlimits#type#soft#hard     If `rlimits` contains duplicated entries with same `type`, the runtime MUST [generate an error](runtime.md#errors). {posixProcess POSIX process config.md#posix-process}
- Linux Process#capabilities     Any value which cannot be mapped to a relevant kernel interface MUST cause an error. {linuxProcess Linux Process config.md#linux-process}
- Linux Process#capabilities#oomScoreAdj     If `oomScoreAdj` is set, the runtime MUST set `oom_score_adj` to the given value. {linuxProcess Linux Process config.md#linux-process}
- Linux Process#capabilities#oomScoreAdj     If `oomScoreAdj` is not set, the runtime MUST NOT change the value of `oom_score_adj`. {linuxProcess Linux Process config.md#linux-process}
- Platform-specific configuration#windows     This MUST be set if the target platform of this spec is `windows`. {platformSpecificConfiguration Platform-specific configuration config.md#platform-specific-configuration}
- POSIX-platform Hooks#hooks#prestart#path#path             This specification extends the IEEE standard in that **`path`** MUST be absolute. {posixPlatformHooks POSIX-platform Hooks config.md#posix-platform-hooks}
- POSIX-platform Hooks#hooks#prestart#path#path#timeout             If set, `timeout` MUST be greater than zero. {posixPlatformHooks POSIX-platform Hooks config.md#posix-platform-hooks}
- POSIX-platform Hooks#hooks#prestart#path#path#timeout Hooks MUST be called in the listed order. {posixPlatformHooks POSIX-platform Hooks config.md#posix-platform-hooks}
- POSIX-platform Hooks#hooks#prestart#path#path#timeout The [state](runtime.md#state) of the container MUST be passed to hooks over stdin so that they may do work appropriate to the current state of the container. {posixPlatformHooks POSIX-platform Hooks config.md#posix-platform-hooks}
- Prestart The pre-start hooks MUST be called after the [`start`](runtime.md#start) operation is called but [before the user-specified program command is executed](runtime.md#lifecycle). {prestart Prestart config.md#prestart}
- Poststart The post-start hooks MUST be called [after the user-specified process is executed](runtime.md#lifecycle) but before the [`start`](runtime.md#start) operation returns. {poststart Poststart config.md#poststart}
- Poststop The post-stop hooks MUST be called [after the container is deleted](runtime.md#lifecycle) but before the [`delete`](runtime.md#delete) operation returns. {poststop Poststop config.md#poststop}
- Annotations#annotations     Annotations MUST be a key-value map. {annotations Annotations config.md#annotations}
- Annotations#annotations     Keys MUST be strings. {annotations Annotations config.md#annotations}
- Annotations#annotations     Keys MUST NOT be an empty string. {annotations Annotations config.md#annotations}
- Annotations#annotations     Keys SHOULD be named using a reverse domain notation - e.g. `com.example.myKey`. {annotations Annotations config.md#annotations}
- Annotations#annotations     Keys using the `org.opencontainers` namespace are reserved and MUST NOT be used by subsequent specifications. {annotations Annotations config.md#annotations}
- Annotations#annotations     Implementations that are reading/processing this configuration file MUST NOT generate an error if they encounter an unknown annotation key. {annotations Annotations config.md#annotations}
- Annotations#annotations     Values MUST be strings. {annotations Annotations config.md#annotations}
- Extensibility Runtimes that are reading or processing this configuration file MUST NOT generate an error if they encounter an unknown property. {extensibility Extensibility config.md#extensibility}
- Extensibility Instead they MUST ignore unknown properties. {extensibility Extensibility config.md#extensibility}
- Valid values Runtimes that are reading or processing this configuration file MUST generate an error when invalid or unsupported values are encountered. {validValues Valid values config.md#valid-values}
-REFS----
- extensibility Extensibility config.md#extensibility
- poststart Poststart config.md#poststart
- platformSpecificConfiguration Platform-specific configuration config.md#platform-specific-configuration
- annotations Annotations config.md#annotations
- prestart Prestart config.md#prestart
- linuxProcess Linux Process config.md#linux-process
- specificationVersion Specification version config.md#specification-version
- poststop Poststop config.md#poststop
- process Process config.md#process
- validValues Valid values config.md#valid-values
- posixPlatformHooks POSIX-platform Hooks config.md#posix-platform-hooks
- posixProcess POSIX process config.md#posix-process
- mounts Mounts config.md#mounts
- root Root config.md#root
+
+// Code represents the spec violation, enumerating both
+// configuration violations and runtime violations.
+type Code int
+
+const (
+        // NonError represents that an input is not an error
+        NonError Code = iota
+        // NonRFCError represents that an error is not a rfc2119 error
+        NonRFCError
+
+	// SpecificationVersionOciversion represents "* **`ociVersion`** (string, Required) MUST be in [SemVer v2.0.0][semver-v2.0.0] format and specifies the version of the Open Container Runtime Specification with which the bundle complies."
+        SpecificationVersionOciversion
+	// RootRoot represents "On Windows, for Windows Server Containers, this field is REQUIRED."
+        RootRoot
+	// RootRoot represents "For [Hyper-V Containers](config-windows.md#hyperv), this field MUST NOT be set."
+        RootRoot
+	// RootRoot represents "On all other platforms, this field is REQUIRED."
+        RootRoot
+	// RootPath represents "* On Windows, `path` MUST be a [volume GUID path][naming-a-volume]."
+        RootPath
+	// RootPath represents "The value SHOULD be the conventional `rootfs`."
+        RootPath
+	// RootPath represents "A directory MUST exist at the path declared by the field."
+        RootPath
+	// RootReadonly represents "* **`readonly`** (bool, OPTIONAL) If true then the root filesystem MUST be read-only inside the container, defaults to false."
+        RootReadonly
+	// RootReadonly represents "* On Windows, this field MUST be omitted or false."
+        RootReadonly
+	// MountsMounts represents "The runtime MUST mount entries in the listed order."
+        MountsMounts
+	// MountsDestination represents "This value MUST be an absolute path."
+        MountsDestination
+	// MountsDestination represents "* Windows: one mount destination MUST NOT be nested within another mount (e.g., c:\\foo and c:\\foo\\bar)."
+        MountsDestination
+	// MountsOptions represents "* Windows: runtimes MUST support `ro`, mounting the filesystem read-only when `ro` is given."
+        MountsOptions
+	// ProcessProcess represents "This property is REQUIRED when [`start`](runtime.md#start) is called."
+        ProcessProcess
+	// ProcessConsolesize represents "Runtimes MUST ignore `consoleSize` if `terminal` is `false` or unset."
+        ProcessConsolesize
+	// ProcessCwd represents "This value MUST be an absolute path."
+        ProcessCwd
+	// ProcessArgs represents "This specification extends the IEEE standard in that at least one entry is REQUIRED, and that entry is used with the same semantics as `execvp`'s *file*."
+        ProcessArgs
+	// PosixProcessRlimitsType represents "The runtime MUST [generate an error](runtime.md#errors) for any values which cannot be mapped to a relevant kernel interface"
+        PosixProcessRlimitsType
+	// PosixProcessRlimitsType represents "For each entry in `rlimits`, a [`getrlimit(3)`][getrlimit.3] on `type` MUST succeed."
+        PosixProcessRlimitsType
+	// PosixProcessRlimitsSoft represents "`rlim.rlim_cur` MUST match the configured value."
+        PosixProcessRlimitsSoft
+	// PosixProcessRlimitsHard represents "`rlim.rlim_max` MUST match the configured value."
+        PosixProcessRlimitsHard
+	// PosixProcessRlimits represents "If `rlimits` contains duplicated entries with same `type`, the runtime MUST [generate an error](runtime.md#errors)."
+        PosixProcessRlimits
+	// LinuxProcessCapabilities represents "Any value which cannot be mapped to a relevant kernel interface MUST cause an error."
+        LinuxProcessCapabilities
+	// LinuxProcessOomscoreadj represents "If `oomScoreAdj` is set, the runtime MUST set `oom_score_adj` to the given value."
+        LinuxProcessOomscoreadj
+	// LinuxProcessOomscoreadj represents "If `oomScoreAdj` is not set, the runtime MUST NOT change the value of `oom_score_adj`."
+        LinuxProcessOomscoreadj
+	// PlatformSpecificConfigurationWindows represents "This MUST be set if the target platform of this spec is `windows`."
+        PlatformSpecificConfigurationWindows
+	// PosixPlatformHooksHooksPrestartPathPath represents "This specification extends the IEEE standard in that **`path`** MUST be absolute."
+        PosixPlatformHooksHooksPrestartPathPath
+	// PosixPlatformHooksHooksPrestartTimeout represents "If set, `timeout` MUST be greater than zero."
+        PosixPlatformHooksHooksPrestartTimeout
+	// PosixPlatformHooks represents "Hooks MUST be called in the listed order."
+        PosixPlatformHooks
+	// PosixPlatformHooks represents "The [state](runtime.md#state) of the container MUST be passed to hooks over stdin so that they may do work appropriate to the current state of the container."
+        PosixPlatformHooks
+	// Prestart represents "The pre-start hooks MUST be called after the [`start`](runtime.md#start) operation is called but [before the user-specified program command is executed](runtime.md#lifecycle)."
+        Prestart
+	// Poststart represents "The post-start hooks MUST be called [after the user-specified process is executed](runtime.md#lifecycle) but before the [`start`](runtime.md#start) operation returns."
+        Poststart
+	// Poststop represents "The post-stop hooks MUST be called [after the container is deleted](runtime.md#lifecycle) but before the [`delete`](runtime.md#delete) operation returns."
+        Poststop
+	// AnnotationsAnnotations represents "Annotations MUST be a key-value map."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Keys MUST be strings."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Keys MUST NOT be an empty string."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Keys SHOULD be named using a reverse domain notation - e.g. `com.example.myKey`."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Keys using the `org.opencontainers` namespace are reserved and MUST NOT be used by subsequent specifications."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Implementations that are reading/processing this configuration file MUST NOT generate an error if they encounter an unknown annotation key."
+        AnnotationsAnnotations
+	// AnnotationsAnnotations represents "Values MUST be strings."
+        AnnotationsAnnotations
+	// Extensibility represents "Runtimes that are reading or processing this configuration file MUST NOT generate an error if they encounter an unknown property."
+        Extensibility
+	// Extensibility represents "Instead they MUST ignore unknown properties."
+        Extensibility
+	// ValidValues represents "Runtimes that are reading or processing this configuration file MUST generate an error when invalid or unsupported values are encountered."
+        ValidValues
+)
+
+var (
+	specificationVersionRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#specification-version"), nil
+	}
+	rootRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#root"), nil
+	}
+	mountsRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#mounts"), nil
+	}
+	processRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#process"), nil
+	}
+	posixProcessRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#posix-process"), nil
+	}
+	linuxProcessRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#linux-process"), nil
+	}
+	platformSpecificConfigurationRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#platform-specific-configuration"), nil
+	}
+	posixPlatformHooksRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#posix-platform-hooks"), nil
+	}
+	prestartRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#prestart"), nil
+	}
+	poststartRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#poststart"), nil
+	}
+	poststopRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#poststop"), nil
+	}
+	annotationsRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#annotations"), nil
+	}
+	extensibilityRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#extensibility"), nil
+	}
+	validValuesRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#valid-values"), nil
+	}
+)
+
+
+var ociErrors = map[Code]errorTemplate{
+	// config.md
+	// Specification version
+        SpecificationVersionOciversion: {Level: rfc2119.Must, Reference: specificationVersionRef},
+	// Root
+        RootRoot: {Level: rfc2119.Required, Reference: rootRef},
+        RootRoot: {Level: rfc2119.Must, Reference: rootRef},
+        RootRoot: {Level: rfc2119.Required, Reference: rootRef},
+        RootPath: {Level: rfc2119.Must, Reference: rootRef},
+        RootPath: {Level: rfc2119.Should, Reference: rootRef},
+        RootPath: {Level: rfc2119.Must, Reference: rootRef},
+        RootReadonly: {Level: rfc2119.Must, Reference: rootRef},
+        RootReadonly: {Level: rfc2119.Must, Reference: rootRef},
+	// Mounts
+        MountsMounts: {Level: rfc2119.Must, Reference: mountsRef},
+        MountsDestination: {Level: rfc2119.Must, Reference: mountsRef},
+        MountsDestination: {Level: rfc2119.Must, Reference: mountsRef},
+        MountsOptions: {Level: rfc2119.Must, Reference: mountsRef},
+	// Process
+        ProcessProcess: {Level: rfc2119.Required, Reference: processRef},
+        ProcessConsolesize: {Level: rfc2119.Must, Reference: processRef},
+        ProcessCwd: {Level: rfc2119.Must, Reference: processRef},
+        ProcessArgs: {Level: rfc2119.Required, Reference: processRef},
+	// POSIX process
+        PosixProcessRlimitsType: {Level: rfc2119.Must, Reference: posixProcessRef},
+        PosixProcessRlimitsType: {Level: rfc2119.Must, Reference: posixProcessRef},
+        PosixProcessRlimitsSoft: {Level: rfc2119.Must, Reference: posixProcessRef},
+        PosixProcessRlimitsHard: {Level: rfc2119.Must, Reference: posixProcessRef},
+        PosixProcessRlimits: {Level: rfc2119.Must, Reference: posixProcessRef},
+	// Linux Process
+        LinuxProcessCapabilities: {Level: rfc2119.Must, Reference: linuxProcessRef},
+        LinuxProcessOomscoreadj: {Level: rfc2119.Must, Reference: linuxProcessRef},
+        LinuxProcessOomscoreadj: {Level: rfc2119.Must, Reference: linuxProcessRef},
+	// Platform-specific configuration
+        PlatformSpecificConfigurationWindows: {Level: rfc2119.Must, Reference: platformSpecificConfigurationRef},
+	// POSIX-platform Hooks
+        PosixPlatformHooksHooksPrestartPathPath: {Level: rfc2119.Must, Reference: posixPlatformHooksRef},
+        PosixPlatformHooksHooksPrestartTimeout: {Level: rfc2119.Must, Reference: posixPlatformHooksRef},
+        PosixPlatformHooks: {Level: rfc2119.Must, Reference: posixPlatformHooksRef},
+        PosixPlatformHooks: {Level: rfc2119.Must, Reference: posixPlatformHooksRef},
+	// Prestart
+        Prestart: {Level: rfc2119.Must, Reference: prestartRef},
+	// Poststart
+        Poststart: {Level: rfc2119.Must, Reference: poststartRef},
+	// Poststop
+        Poststop: {Level: rfc2119.Must, Reference: poststopRef},
+	// Annotations
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Should, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+        AnnotationsAnnotations: {Level: rfc2119.Must, Reference: annotationsRef},
+	// Extensibility
+        Extensibility: {Level: rfc2119.Must, Reference: extensibilityRef},
+        Extensibility: {Level: rfc2119.Must, Reference: extensibilityRef},
+	// Valid values
+        ValidValues: {Level: rfc2119.Must, Reference: validValuesRef},
+)

@@ -25,14 +25,7 @@ func main() {
 
 	leafs := GetLeafs(data)
 	cleafs := CutLeafs(leafs)
-	//	cleafs := leafs
 	rfcs, refs := OutputLeafs(base, cleafs)
-	fmt.Println("RFCS ----")
-	for _, l := range rfcs {
-		l.Debug("")
-	}
-	fmt.Println("REFS----")
-	for _, l := range refs {
-		l.Debug("")
-	}
+
+	ToGoTemplate(base, rfcs, refs)
 }

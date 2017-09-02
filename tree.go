@@ -32,7 +32,7 @@ type OutputRef struct {
 
 func NewOutputRef(base string, leaf Leaf) OutputRef {
 	var o OutputRef
-	o.Var = ToCamel(leaf.Key)
+	o.Var = ToCamel(leaf.Key, false)
 	o.Name = leaf.Key
 	o.Ref = fmt.Sprintf("%s#%s", base, ToRef(leaf.Key))
 	return o
@@ -46,6 +46,8 @@ type OutputRFC struct {
 	Keys  []string
 	Value string
 	Ref   OutputRef
+	RFC   string
+	Title string
 }
 
 func (o *OutputRFC) Debug(prefix string) {
@@ -55,10 +57,12 @@ func NewOutputRFC(base string, leafs []Leaf, cur int, title map[int]OutputRef) O
 	var o OutputRFC
 	curLevel := leafs[cur].Level
 	o.Value = leafs[cur].Value
+	o.RFC = ToCamel(strings.ToLower(leafs[cur].RFC), true)
 	for i := cur; i >= 0; i-- {
 		// Get Title, finish
 		if leafs[i].Type == "title" {
 			key := leafs[i].GetKey()
+			o.Title = key
 			o.Keys = append([]string{key}, o.Keys...)
 			outputRef := NewOutputRef(base, leafs[i])
 			if _, ok := title[i]; !ok {
@@ -111,10 +115,10 @@ func ToRef(value string) string {
 	return ref
 }
 
-func ToCamel(value string) string {
+func ToCamel(value string, begin bool) string {
 	value = ToRef(value)
 	var ret string
-	last := false
+	last := begin
 	for _, r := range value {
 		switch r {
 		case '-':
