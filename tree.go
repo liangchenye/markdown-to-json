@@ -24,6 +24,9 @@ func CutLeafs(leafs []Leaf) []Leaf {
 	return ret
 }
 
+// var: poststartRef
+// name: PostStart
+// ref : config.md#poststart
 type OutputRef struct {
 	Var  string
 	Name string
@@ -42,6 +45,10 @@ func (o *OutputRef) Debug(prefix string) {
 	fmt.Printf("%s --- Ref --- %s %s %s\n", prefix, o.Var, o.Name, o.Ref)
 }
 
+// Keys:  Root, Path
+// Value: "A directory MUST exist at the path declared by the field."
+// RFC: Must
+// Title: Root
 type OutputRFC struct {
 	Keys  []string
 	Value string

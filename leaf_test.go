@@ -12,9 +12,9 @@ func TestTitle(t *testing.T) {
 		title    Leaf
 		expected bool
 	}{
-		{"##<a> b </a> HEllo world", Leaf{"title", "##<a> b </a> HEllo world", 2, "HEllo world", "hello-world"}, true},
-		{"##<a> b </a> hello (world)", Leaf{"title", "##<a> b </a> hello (world)", 2, "hello (world)", "hello-world"}, true},
-		{"#<a name=\"ab\"> /> hello world", Leaf{"title", "#<a name=\"ab\"> /> hello world", 1, "hello world", "hello-world"}, true},
+		{"##<a> b </a> HEllo world", Leaf{"title", "##<a> b </a> HEllo world", 2, "HEllo world", ""}, true},
+		{"##<a> b </a> hello (world)", Leaf{"title", "##<a> b </a> hello (world)", 2, "hello (world)", ""}, true},
+		{"#<a name=\"ab\"> /> hello world", Leaf{"title", "#<a name=\"ab\"> /> hello world", 1, "hello world", ""}, true},
 	}
 
 	for _, c := range cases {
@@ -31,12 +31,14 @@ func TestItem(t *testing.T) {
 		value string
 		item  Leaf
 	}{
-		{"    **`myVersion`** it MUST", Leaf{"item", "    **`myVersion`** it MUST", 4, "myVersion", "MUST"}},
+		{"    **`myVersion`** it MUST", Leaf{"item", "    **`myVersion`** it MUST", 104, "myVersion", "MUST"}},
 		{"hello", Leaf{"item", "hello", 0, "", ""}},
 	}
 
 	for _, c := range cases {
 		item := NewLeaf(c.value)
-		assert.Equal(t, c.item, *item)
+		if item != nil {
+			assert.Equal(t, c.item, *item)
+		}
 	}
 }
