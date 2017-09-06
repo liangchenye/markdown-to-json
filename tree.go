@@ -34,7 +34,7 @@ func NewOutputRef(base string, leaf Leaf) OutputRef {
 	var o OutputRef
 	o.Var = ToCamel(leaf.Key, false)
 	o.Name = leaf.Key
-	o.Ref = fmt.Sprintf("%s#%s", base, ToRef(leaf.Key))
+	o.Ref = fmt.Sprintf("%s#%s", base, ToRef(leaf.Key, false))
 	return o
 }
 
@@ -105,18 +105,20 @@ func OutputLeafs(base string, leafs []Leaf) ([]OutputRFC, []OutputRef) {
 	return outputRFCs, outputRefs
 }
 
-func ToRef(value string) string {
+func ToRef(value string, begin bool) string {
 	name := strings.TrimSpace(value)
 
 	ref := strings.Replace(name, "(", "", -1)
 	ref = strings.Replace(ref, ")", "", -1)
 	ref = strings.Replace(ref, " ", "-", -1)
-	ref = strings.ToLower(ref)
+	if !begin {
+		ref = strings.ToLower(ref)
+	}
 	return ref
 }
 
 func ToCamel(value string, begin bool) string {
-	value = ToRef(value)
+	value = ToRef(value, begin)
 	var ret string
 	last := begin
 	for _, r := range value {

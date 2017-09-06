@@ -40,16 +40,6 @@ type Leaf struct {
 	RFC string
 }
 
-func GetTitleNameAndRef(value string) (string, string) {
-	name := strings.TrimSpace(value)
-
-	ref := strings.Replace(name, "(", "", -1)
-	ref = strings.Replace(ref, ")", "", -1)
-	ref = strings.Replace(ref, " ", "-", -1)
-	ref = strings.ToLower(ref)
-	return name, ref
-}
-
 func NewTitle(value string) (Leaf, error) {
 	var title Leaf
 	// trim all the anchors
