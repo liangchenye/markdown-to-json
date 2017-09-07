@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -35,12 +36,11 @@ func main() {
 	leafs := GetLeafs(data)
 	cleafs := CutLeafs(leafs)
 	rfcs, refs := OutputLeafs(base, cleafs)
+	unmarkedRfcs, unmarkedRefs := GetUnmarked(markedData, rfcs, refs)
 
-	if false {
-		unmarkedRfcs, unmarkedRefs := GetUnmarked(markedData, rfcs, refs)
+	strs := UpdateGoFile(strings.Split(string(markedData), "\n"), unmarkedRfcs, unmarkedRefs)
 
-		fmt.Println(unmarkedRfcs)
-		fmt.Println(unmarkedRefs)
-	}
-	ToGoTemplate(base, rfcs, refs)
+	output := strings.Join(strs, "\n")
+
+	fmt.Println(output)
 }
