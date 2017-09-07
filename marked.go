@@ -36,7 +36,9 @@ func GetUnmarked(markedData []byte, rfcs []OutputRFC, refs []OutputRef) ([]Outpu
 	}
 
 	for _, ref := range refs {
-		if _, ok := markMap[fmt.Sprintf("%sRef", strings.TrimSpace(ref.Var))]; !ok {
+		newVar := fmt.Sprintf("%sRef", strings.TrimSpace(ref.Var))
+		if _, ok := markMap[newVar]; !ok {
+			ref.Var = newVar
 			retRefs = append(retRefs, ref)
 		}
 	}

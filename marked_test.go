@@ -22,15 +22,15 @@ func TestGetUnmarked(t *testing.T) {
 		        return fmt.Sprintf(referenceTemplate, version, "config.md#specification-version"), nil
 		}
 		`
-	rfcs := []OutputRFC{{Value: "a"}, {Value: "x"}}
-	refs := []OutputRef{{Var: "aRef"}, {Var: "xRef"}}
+	markedRfcs := []OutputRFC{{Value: "a"}, {Value: "x"}}
+	markedRefs := []OutputRef{{Var: "a"}, {Var: "x"}}
 
-	unmarkedRfcs := []OutputRFC{{Value: "x"}}
-	unmarkedRefs := []OutputRef{{Var: "xRef"}}
-	retRfcs, retRefs := GetUnmarked([]byte(data), rfcs, refs)
+	expectedRfcs := []OutputRFC{{Value: "x"}}
+	expectedRefs := []OutputRef{{Var: "xRef"}}
+	retRfcs, retRefs := GetUnmarked([]byte(data), markedRfcs, markedRefs)
 
-	assert.Equal(t, unmarkedRfcs, retRfcs)
-	assert.Equal(t, unmarkedRefs, retRefs)
+	assert.Equal(t, expectedRfcs, retRfcs)
+	assert.Equal(t, expectedRefs, retRefs)
 }
 
 func TestParseMarked(t *testing.T) {

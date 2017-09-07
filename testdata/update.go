@@ -120,6 +120,13 @@ const (
 	CreateWithUniqueID
 	// CreateNewContainer represents the error code 'create' lifecyle test that creates new container
 	CreateNewContainer
+	// TODO: newly added code, need to update.
+	// SpecificationVersionOciVersion represents "* **`ociVersion`** (string, Required) MUST be in [SemVer v2.0.0][semver-v2.0.0] format and specifies the version of the Open Container Runtime Specification with which the bundle complies."
+	SpecificationVersionOciVersion
+
+	// TODO: newly added code, need to update.
+	// Extensibility represents "Instead they MUST ignore unknown properties."
+	Extensibility
 )
 
 var (
@@ -175,6 +182,10 @@ var (
 
 	runtimeCreateRef = func(version string) (reference string, err error) {
 		return fmt.Sprintf(referenceTemplate, version, "runtime.md#create"), nil
+	}
+	// TODO: newly added code, need to update.
+	specificationVersionRefRef = func(version string) (reference string, err error) {
+		return fmt.Sprintf(referenceTemplate, version, "config.md#specification-version"), nil
 	}
 )
 
@@ -264,6 +275,15 @@ var ociErrors = map[Code]errorTemplate{
 	CreateWithID:       {Level: rfc2119.Must, Reference: runtimeCreateRef},
 	CreateWithUniqueID: {Level: rfc2119.Must, Reference: runtimeCreateRef},
 	CreateNewContainer: {Level: rfc2119.Must, Reference: runtimeCreateRef},
+	// Specification version
+
+	// TODO: newly added code, need to update.
+	SpecificationVersionOciVersion: {Level: rfc2119.Must, Reference: specificationVersionRef},
+
+	// Extensibility
+
+	// TODO: newly added code, need to update.
+	Extensibility: {Level: rfc2119.Must, Reference: extensibilityRef},
 }
 
 // Error returns the error message with specification reference.

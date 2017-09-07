@@ -36,9 +36,11 @@ func main() {
 	cleafs := CutLeafs(leafs)
 	rfcs, refs := OutputLeafs(base, cleafs)
 
-	unmarkedRfcs, unmarkedRefs := GetUnmarked(markedData, rfcs, refs)
+	if false {
+		unmarkedRfcs, unmarkedRefs := GetUnmarked(markedData, rfcs, refs)
 
-	fmt.Println(unmarkedRfcs, unmarkedRefs)
-	//	rfcs, refs = ToUpdateTemplate(rfcs, refs)
-	//	ToGoTemplate(base, rfcs, refs)
+		fmt.Println(unmarkedRfcs)
+		fmt.Println(unmarkedRefs)
+	}
+	ToGoTemplate(base, rfcs, refs)
 }

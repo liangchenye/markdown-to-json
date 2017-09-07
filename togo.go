@@ -16,69 +16,94 @@ const (
         NonError Code = iota
         // NonRFCError represents that an error is not a rfc2119 error
         NonRFCError
+
 `
-	errCodeTemplate = `
-	// %s represents "%s"
-        %s`
-	errCodeEnd = `
-)
+	errCodeTemplate = `	// %s represents "%s"
+        %s
+`
+	errCodeEnd = `)
 `
 )
 
 var (
-	refBegin        = `var (`
-	refItemTemplate = `
-	%sRef = func(version string) (reference string, err error) {
+	refBegin = `var (
+`
+	refItemTemplate = `	%sRef = func(version string) (reference string, err error) {
 		return fmt.Sprintf(referenceTemplate, version, "%s"), nil
-	}`
-	refEnd = `
-)
+	}
+`
+	refEnd = `)
 `
 )
 
 var (
-	errRefBegin = `
-var ociErrors = map[Code]errorTemplate{
-	// %s`
-	errRefTitleComment = `
-	// %s`
-	errRefTemplate = `
-        %s: {Level: rfc2119.%s, Reference: %sRef},`
-
-	errRefEnd = `
-)
+	errMapBegin = `var ociErrors = map[Code]errorTemplate{
+	// %s
+`
+	errMapTitleComment = `	// %s
+`
+	errMapTemplate = `	%s: {Level: rfc2119.%s, Reference: %sRef},
+`
+	errMapEnd = `)
 `
 )
+
+func GetOutputCodeContent(rfcs []OutputRFC, remind string) []string {
+	var ret []string
+	for _, r := range rfcs {
+		val := ToCamel(strings.Join(r.Keys, "-"), true)
+		if remind != "" {
+			ret = append(ret, remind)
+		}
+		ret = append(ret, fmt.Sprintf(errCodeTemplate, val, strings.TrimSpace(r.Value), val))
+	}
+	return ret
+}
+
+func GetOutputRefContent(refs []OutputRef, remind string) []string {
+	var ret []string
+	for _, r := range refs {
+		if remind != "" {
+			ret = append(ret, remind)
+		}
+		ret = append(ret, fmt.Sprintf(refItemTemplate, r.Var, r.Ref))
+	}
+	return ret
+}
+
+func GetOutputMapContent(rfcs []OutputRFC, remind string) []string {
+	var ret []string
+	lastTitle := ""
+	for _, r := range rfcs {
+		if lastTitle != r.Title {
+			ret = append(ret, fmt.Sprintf(errMapTitleComment, r.Title))
+			lastTitle = r.Title
+		}
+		if remind != "" {
+			ret = append(ret, remind)
+		}
+		val := ToCamel(strings.Join(r.Keys, "-"), true)
+		ret = append(ret, fmt.Sprintf(errMapTemplate, val, r.RFC, r.Ref.Var))
+	}
+	return ret
+}
 
 func ToGoTemplate(base string, rfcs []OutputRFC, refs []OutputRef) {
 	// Error code
 	fmt.Printf(errCodeBegin)
-	for _, r := range rfcs {
-		val := ToCamel(strings.Join(r.Keys, "-"), true)
-		fmt.Printf(errCodeTemplate, val, strings.TrimSpace(r.Value), val)
-	}
+	fmt.Printf(strings.Join(GetOutputCodeContent(rfcs, ""), ""))
 	fmt.Printf(errCodeEnd)
 
 	fmt.Println("")
 
 	// Refs
 	fmt.Printf(refBegin)
-	for _, r := range refs {
-		fmt.Printf(refItemTemplate, r.Var, r.Ref)
-	}
+	fmt.Printf(strings.Join(GetOutputRefContent(refs, ""), ""))
 	fmt.Printf(refEnd)
 
-	// Error ref
+	// Error map
 	fmt.Println("")
-	fmt.Printf(errRefBegin, base)
-	lastTitle := ""
-	for _, r := range rfcs {
-		if lastTitle != r.Title {
-			fmt.Printf(errRefTitleComment, r.Title)
-			lastTitle = r.Title
-		}
-		val := ToCamel(strings.Join(r.Keys, "-"), true)
-		fmt.Printf(errRefTemplate, val, r.RFC, r.Ref.Var)
-	}
-	fmt.Printf(errRefEnd)
+	fmt.Printf(errMapBegin, base)
+	fmt.Printf(strings.Join(GetOutputMapContent(rfcs, ""), ""))
+	fmt.Printf(errMapEnd)
 }
