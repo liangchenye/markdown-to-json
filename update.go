@@ -1,15 +1,13 @@
 package main
 
-import ()
-
 var (
-	codeBeginReg = match("^type Code int")
+	codeBeginReg = match("^// define error codes")
 	codeEndReg   = match("^\\)")
 
 	refBeginReg = match("Ref = func")
 	refEndReg   = match("^\\)")
 
-	errMapBeginReg = match("^var ociErrors")
+	errMapBeginReg = match("^\tregistOCIError")
 	errMapEndReg   = match("^\\}")
 )
 
@@ -42,7 +40,7 @@ func UpdateGoFile(lines []string, rfcs []OutputRFC, refs []OutputRef) []string {
 			}
 		case "mapBegin":
 			if errMapEndReg.MatchString(l) {
-				ret = append(ret, GetOutputMapContent(rfcs, remindTemplate)...)
+				ret = append(ret, GetOutputRegContent(rfcs, remindTemplate)...)
 				status = "none"
 			}
 		}

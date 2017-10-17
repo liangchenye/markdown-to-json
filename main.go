@@ -12,7 +12,12 @@ func main() {
 	var specFile string
 	var specErrFile string
 	var base string
-	if len(os.Args) > 2 {
+	var markedData []byte
+	var strs []string
+
+	if len(os.Args) == 2 {
+		specFile = os.Args[1]
+	} else if len(os.Args) == 3 {
 		specFile = os.Args[1]
 		specErrFile = os.Args[2]
 	} else {
@@ -27,10 +32,12 @@ func main() {
 		return
 	}
 
-	markedData, err := ioutil.ReadFile(specErrFile)
-	if err != nil {
-		fmt.Println(err, markedData)
-		return
+	if specErrFile != "" {
+		markedData, err = ioutil.ReadFile(specErrFile)
+		if err != nil {
+			fmt.Println(err, markedData)
+			return
+		}
 	}
 
 	leafs := GetLeafs(data)
@@ -38,9 +45,11 @@ func main() {
 	rfcs, refs := OutputLeafs(base, cleafs)
 	unmarkedRfcs, unmarkedRefs := GetUnmarked(markedData, rfcs, refs)
 
-	strs := UpdateGoFile(strings.Split(string(markedData), "\n"), unmarkedRfcs, unmarkedRefs)
-
-	output := strings.Join(strs, "\n")
-
-	fmt.Println(output)
+	if specErrFile != "" {
+		strs = UpdateGoFile(strings.Split(string(markedData), "\n"), unmarkedRfcs, unmarkedRefs)
+		output := strings.Join(strs, "\n")
+		fmt.Println(output)
+	} else {
+		ToGoTemplate(headTemplate, unmarkedRfcs, unmarkedRefs)
+	}
 }

@@ -14,42 +14,9 @@ We provide two demo files:
 Then we can run
 ```
 go build
-./markdown-to-json > a
-diff testdata/error.go a >b
-cat b
+./markdown-to-json testdata/config.md > config.go
 ```
 
-We will see the diff like this
-```
-122a123,130
-> 	// TODO: newly added code, need to update.
-> 	// SpecificationVersionOciVersion represents "* **`ociVersion`** (string, Required) MUST be in [SemVer v2.0.0][semver-v2.0.0] format and specifies the version of the Open Container Runtime Specification with which the bundle complies."
->         SpecificationVersionOciVersion
-> 
-> 	// TODO: newly added code, need to update.
-> 	// Extensibility represents "Instead they MUST ignore unknown properties."
->         Extensibility
-> 
-178a187,191
-> 	// TODO: newly added code, need to update.
-> 	specificationVersionRefRef = func(version string) (reference string, err error) {
-> 		return fmt.Sprintf(referenceTemplate, version, "config.md#specification-version"), nil
-> 	}
-> 
-266a280,289
-> 	// Specification version
-> 
-> 	// TODO: newly added code, need to update.
-> 	SpecificationVersionOciVersion: {Level: rfc2119.Must, Reference: specificationVersionRef},
-> 
-> 	// Extensibility
-> 
-> 	// TODO: newly added code, need to update.
-> 	Extensibility: {Level: rfc2119.Must, Reference: extensibilityRef},
-> 
-319a343
-> 
-```
 We got two RFC code updated: `SpecificationVersionOciVersion` and `Extensibility`.
 So now, as the runtime-tool developer, we need to modify them by using a suitable variable name and remove the `TODO` lines.
 Don't forget to update the real runtime validation code.
@@ -61,3 +28,10 @@ git commit .. ; git push
 ```
 
 Now we are done!
+
+## TODO
+- update
+  I did not check the new version, so the update function is not tested.
+  If we find there is update, we can add 'icon' and mark there is an update.
+- percentage 
+  for example, if we support 40% RFC codes, we can tell and add to icon just like UT coverage.

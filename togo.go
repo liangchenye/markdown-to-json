@@ -6,45 +6,41 @@ import (
 )
 
 var (
-	errCodeBegin = `
-// Code represents the spec violation, enumerating both
-// configuration violations and runtime violations.
-type Code int
+	headTemplate = `// Package specerror implements runtime-spec-specific tooling for
+// tracking RFC 2119 violations.
+package specerror
 
-const (
-        // NonError represents that an input is not an error
-        NonError Code = iota
-        // NonRFCError represents that an error is not a rfc2119 error
-        NonRFCError
+import (
+    "fmt"
 
-`
-	errCodeTemplate = `	// %s represents "%s"
-        %s
-`
-	errCodeEnd = `)
-`
+    rfc2119 "github.com/opencontainers/runtime-tools/error"
 )
-
-var (
-	refBegin = `var (
 `
-	refItemTemplate = `	%sRef = func(version string) (reference string, err error) {
+
+	codeBeginTemplate = `
+// define error codes
+const (
+`
+	codeItemTemplate = `	// %s represents "%s"
+        %s = "%s"
+`
+	codeEndTemplate = `)
+`
+
+	refBeginTemplate = `var (
+`
+	refItemTemplate = `	%s = func(version string) (reference string, err error) {
 		return fmt.Sprintf(referenceTemplate, version, "%s"), nil
 	}
 `
-	refEnd = `)
-`
-)
+	refEndTemplate = `)`
 
-var (
-	errMapBegin = `var ociErrors = map[Code]errorTemplate{
-	// %s
-`
-	errMapTitleComment = `	// %s
-`
-	errMapTemplate = `	%s: {Level: rfc2119.%s, Reference: %sRef},
-`
-	errMapEnd = `)
+	regBeginTemplate = `
+func init() {`
+	regItemTemplate = `
+	registOCIError(%s, rfc2119.%s, %sRef)`
+	regEndTemplate = `
+}
 `
 )
 
@@ -55,7 +51,7 @@ func GetOutputCodeContent(rfcs []OutputRFC, remind string) []string {
 		if remind != "" {
 			ret = append(ret, remind)
 		}
-		ret = append(ret, fmt.Sprintf(errCodeTemplate, val, strings.TrimSpace(r.Value), val))
+		ret = append(ret, fmt.Sprintf(codeItemTemplate, val, strings.TrimSpace(r.Value), val, strings.TrimSpace(r.Value)))
 	}
 	return ret
 }
@@ -71,39 +67,36 @@ func GetOutputRefContent(refs []OutputRef, remind string) []string {
 	return ret
 }
 
-func GetOutputMapContent(rfcs []OutputRFC, remind string) []string {
+func GetOutputRegContent(rfcs []OutputRFC, remind string) []string {
 	var ret []string
-	lastTitle := ""
 	for _, r := range rfcs {
-		if lastTitle != r.Title {
-			ret = append(ret, fmt.Sprintf(errMapTitleComment, r.Title))
-			lastTitle = r.Title
-		}
 		if remind != "" {
 			ret = append(ret, remind)
 		}
 		val := ToCamel(strings.Join(r.Keys, "-"), true)
-		ret = append(ret, fmt.Sprintf(errMapTemplate, val, r.RFC, r.Ref.Var))
+		ret = append(ret, fmt.Sprintf(regItemTemplate, val, r.RFC, r.Ref.Var))
 	}
 	return ret
 }
 
 func ToGoTemplate(base string, rfcs []OutputRFC, refs []OutputRef) {
+	fmt.Printf(base)
+
 	// Error code
-	fmt.Printf(errCodeBegin)
+	fmt.Printf(codeBeginTemplate)
 	fmt.Printf(strings.Join(GetOutputCodeContent(rfcs, ""), ""))
-	fmt.Printf(errCodeEnd)
+	fmt.Printf(codeEndTemplate)
 
 	fmt.Println("")
 
 	// Refs
-	fmt.Printf(refBegin)
+	fmt.Printf(refBeginTemplate)
 	fmt.Printf(strings.Join(GetOutputRefContent(refs, ""), ""))
-	fmt.Printf(refEnd)
+	fmt.Printf(refEndTemplate)
 
 	// Error map
 	fmt.Println("")
-	fmt.Printf(errMapBegin, base)
-	fmt.Printf(strings.Join(GetOutputMapContent(rfcs, ""), ""))
-	fmt.Printf(errMapEnd)
+	fmt.Printf(regBeginTemplate)
+	fmt.Printf(strings.Join(GetOutputRegContent(rfcs, ""), ""))
+	fmt.Printf(regEndTemplate)
 }
