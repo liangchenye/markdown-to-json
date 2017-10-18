@@ -6,9 +6,7 @@ import (
 )
 
 var (
-	headTemplate = `// Package specerror implements runtime-spec-specific tooling for
-// tracking RFC 2119 violations.
-package specerror
+	headTemplate = `package specerror
 
 import (
     "fmt"
