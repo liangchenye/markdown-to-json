@@ -44,8 +44,8 @@ func init() {`
 
 func GetOutputCodeContent(rfcs []OutputRFC, remind string) []string {
 	var ret []string
-	for _, r := range rfcs {
-		val := ToCamel(strings.Join(r.Keys, "-"), true)
+	for i, r := range rfcs {
+		val := fmt.Sprintf("%s%d", ToCamel(strings.Join(r.Keys, "-"), true), i)
 		if remind != "" {
 			ret = append(ret, remind)
 		}
@@ -67,11 +67,11 @@ func GetOutputRefContent(refs []OutputRef, remind string) []string {
 
 func GetOutputRegContent(rfcs []OutputRFC, remind string) []string {
 	var ret []string
-	for _, r := range rfcs {
+	for i, r := range rfcs {
 		if remind != "" {
 			ret = append(ret, remind)
 		}
-		val := ToCamel(strings.Join(r.Keys, "-"), true)
+		val := fmt.Sprintf("%s%d", ToCamel(strings.Join(r.Keys, "-"), true), i)
 		ret = append(ret, fmt.Sprintf(regItemTemplate, val, r.RFC, r.Ref.Var))
 	}
 	return ret
